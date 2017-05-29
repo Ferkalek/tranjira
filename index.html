@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<html lang="ru" ng-app="tranjiraApp">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Tranjira</title>
+
+    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/AdminLTE.min.css" rel="stylesheet">
+    <link href="css/bootstrap-theme.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+</head>
+
+<body ng-controller="homeCtrl">
+<div class="blog-masthead">
+    <div class="container">
+        <nav class="blog-nav">
+            <span class="blog-nav-item" ng-click="showSettings()">Категории</span>
+            <span class="blog-nav-item" ng-click="showModalAddExpensCat()">Добавить категорию</span>
+            <span class="blog-nav-item" ng-click="addExpens()">Добавить расходы</span>
+        </nav>
+    </div>
+</div>
+
+<div class="container">
+    <div class="page-content">
+        <h4 class="blog-post-title">Расходы</h4>
+        <hr>
+        <div class="table-responsive">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <span>Список расходов</span>
+                    <div class="sw-search">
+                        <div class="nav-search" id="nav-search">
+                            Фильтр: <span class="input-icon">
+                        <input placeholder="Поиск по расходам" class="nav-search-input"
+                               ng-model="searchString" type="text" focus>
+                        <i class="search-icon glyphicon glyphicon-search nav-search-icon"></i>
+                    </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Название расходов</th>
+                            <th>Сумма
+                                <input type="checkbox" ng-model="sortBool" id="sort" class="sort">
+                                <label for="sort">
+                                    <i class="fa fa-angle-up" aria-hidden="true"></i>
+                                    <i class="fa fa-angle-down" aria-hidden="true"></i>
+                                </label>
+                            </th>
+                            <th>Дата</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="item in list | orderBySum:sortBool | searchFor:searchString">
+                            <td>{{$index + 1}}</td>
+                            <td>{{item.name}}</td>
+                            <td>{{item.sum}}</td>
+                            <td>{{item.dateExpense | date: "dd.MM.yyyy"}}</td>
+                        </tr>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th colspan="2">Итого</th>
+                            <th colspan="2">{{list | searchForSum:searchString}}</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- modal -->
+<div class="overlay" ng-click="hideModal()" ng-class="modalShow ? 'show-modal' : ''"></div>
+<div class="modal">
+    <div class="close" ng-click="hideModal()">x</div>
+
+    <div class="modal-body" ng-class="viewModal">
+
+        <!-- модальное окно списка категорий расходов -->
+        <div class="modal-part modal-list">
+            <h3>Статти расходов</h3>
+            <div class="tb-wrap">
+                <table class="table table-striped">
+                    <tr>
+                        <th></th>
+                        <th>Название категории</th>
+                        <th></th>
+                    </tr>
+                    <tr ng-repeat="item in listCat">
+                        <td style="width: 25px;">{{$index+1}}</td>
+                        <td>
+                            <div class="change-cat" ng-class="item.isOpen ? 'show-chang-elem' : ''">
+                                <p class="start-show">{{item.name}}</p>
+                                <form name="changeNameCat" class="chang-elem" novalidate>
+                                    <input name="newNameExpCat" type="text" class="intable" placeholder="{{item.name}}" ng-model="newNameCat" required>
+                                    <button type="button" class="chang-elem btn ng-binding btn-success btn-flat" ng-click="changeExpensCat($index, newNameCat)" ng-disabled="changeNameCat.$invalid">Сохранить</button>
+                                </form>
+
+                            </div>
+                        </td>
+                        <td style="width: 100px;">
+                            <div class="btn-group change-cat" ng-class="item.isOpen ? 'show-chang-elem' : ''">
+                                <button type="button" class="btn btn-default btn-flat fa fa-edit start-show"
+                                        ng-click="preChangeCat($index)"></button>
+                                <button type="button" class="btn btn-danger btn-flat fa fa-trash-o"
+                                        ng-click="delExpensCat($index)"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- модальное окно по добавлению категории расходов -->
+        <div class="modal-part modal-expensecat">
+            <h3>Новая категория расходов</h3>
+            <form class="tb-wrap" name="addExpenseCat" novalidate  ng-submit="addExpensCat()">
+                <input name="nameExpensCat" type="text" ng-model="newListCat" required>
+                <div class="error" ng-show="addExpenseCat.nameExpensCat.$invalid && addExpenseCat.nameExpensCat.$dirty">
+                    {{getError(addExpenseCat.nameExpensCat.$error)}}
+                </div>
+                <button class="btn btn-primary btn-flat" type="submit"
+                        ng-disabled="addExpenseCat.$invalid">Добавить</button>
+            </form>
+        </div>
+
+        <!-- модальное окно по добавлению расходов -->
+        <div class="modal-part modal-expense">
+            <h3>Название расходов</h3>
+            <form class="tb-wrap" name="addExpense" novalidate>
+                <select ng-model="selected" ng-options="item.name for item in listCat track by item.id"></select>
+                <h4>Сумма</h4>
+                <!--required или ng-required="requireValue", но тогда в js нужно добавить
+                $scope.requireValue = true; -->
+                <input name="sumExpense" type="text" ng-model="sumExpense" required ng-pattern="matchPattern">
+                <div class="error" ng-show="addExpense.sumExpense.$invalid && addExpense.sumExpense.$dirty">
+                    {{getError(addExpense.sumExpense.$error)}}
+                </div>
+                <button class="btn btn-primary btn-flat" type="button"
+                        ng-click="addItem()" ng-disabled="addExpense.$invalid">Добавить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/search.js"></script>
+</body>
+</html>
